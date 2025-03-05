@@ -18,7 +18,8 @@ from transformers import (
 )
 import torch.nn as nn
 
-from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer, set_seed
+from trl import AutoModelForCausalLMWithValueHead, PPOConfig, PPOTrainer
+from transformers import set_seed
 from trl.core import LengthSampler
 import wandb
 from scipy import stats as scipy_stats
@@ -165,7 +166,6 @@ def collator(data):
 
 reward_model_name = script_args.reward_model_name
 config = PPOConfig(
-    model_name=script_args.model_name,
     learning_rate=script_args.learning_rate,
     log_with=script_args.log_with,
     batch_size=script_args.batch_size,
@@ -227,7 +227,7 @@ lora_config = LoraConfig(
     task_type="CAUSAL_LM",
 )
 model = AutoModelForCausalLMWithValueHead.from_pretrained(
-    config.model_name,
+    script_args.model_name,
     load_in_4bit=True,
     device_map={"": current_device},
     peft_config=lora_config,
@@ -264,7 +264,7 @@ if ppo_trainer.accelerator.num_processes == 1:
     device = 0 if torch.cuda.is_available() else "cpu"  # to avoid a ` pipeline` bug
 
 reward_model = AutoModelForSequenceClassification.from_pretrained(
-    config.model_name, num_labels=1, torch_dtype=torch.bfloat16,
+    script_args.model_name, num_labels=1, torch_dtype=torch.bfloat16,
     load_in_4bit=True
 )
 rm_peft_config = LoraConfig(
